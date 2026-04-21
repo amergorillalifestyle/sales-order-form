@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sales Order Form</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f5f5f3;
+    color: #1a1a1a;
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+    padding: 2rem 1rem 4rem;
+  }
+
+  .page-wrap {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .page-header {
+    margin-bottom: 2rem;
+  }
+
+  .page-header h1 {
+    font-size: 22px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 4px;
+  }
+
+  .page-header p {
+    font-size: 13px;
+    color: #888;
+  }
+
+  /* Admin Panel Toggle */
+  .admin-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #888;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 6px 12px;
+    cursor: pointer;
+    margin-bottom: 1.25rem;
+    transition: all 0.15s;
+    text-decoration: none;
+  }
+  .admin-toggle:hover { color: #1a1a1a; border-color: #aaa; }
+
+  /* Admin Panel */
+  .admin-panel {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.25rem;
+    display: none;
+  }
+  .admin-panel.open { display: block; }
+
+  .admin-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 1.25rem;
+    border-bottom: 1px solid #e8e8e8;
+    padding-bottom: 0;
+  }
+  .admin-tab {
+    font-size: 13px;
+    font-weight: 500;
+    color: #888;
+    background: none;
+    border: none;
+    padding: 8px 14px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.15s;
+  }
+  .admin-tab.active { color: #1a1a1a; border-bottom-color: #1a1a1a; }
+  .admin-tab-content { display: none; }
+  .admin-tab-content.active { display: block; }
+
+  /* Distributors */
+  .distributor-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+  .distributor-item {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr 36px;
+    gap: 8px;
+    align-items: center;
+    background: #fafafa;
+    border: 1px solid #e8e8e8;
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .distributor-item input {
+    font-size: 13px;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 6px 10px;
+    color: #1a1a1a;
+    width: 100%;
+  }
+  .distributor-item input:focus { outline: none; border-color: #aaa; }
+
+  /* Products */
+  .catalog-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .product-card {
+    background: #fafafa;
+    border: 1px solid #e8e8e8;
+    border-radius: 8px;
+    padding: 12px;
+  }
+  .product-name-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+  .product-name-row input {
+    flex: 1;
+    font-size: 13px;
+    font-weight: 600;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 5px 9px;
+    color: #1a1a1a;
+  }
+  .product-name-row input:focus { outline: none; border-color: #aaa; }
+  .variant-label { font-size: 11px; color: #aaa; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+  .variant-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+  .variant-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 20px;
+    padding: 3px 4px 3px 9px;
+    font-size: 12px;
+  }
+  .variant-tag input {
+    border: none;
+    background: transparent;
+    font-size: 12px;
+    color: #1a1a1a;
+    width: 70px;
+    padding: 0;
+  }
+  .variant-tag input:focus { outline: none; }
+  .tag-x {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #bbb;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0 3px;
+  }
+  .tag-x:hover { color: #e24b4a; }
+
+  /* Shared small buttons */
+  .btn-add-small {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: #888;
+    background: #fff;
+    border: 1px dashed #d0d0d0;
+    border-radius: 20px;
+    padding: 3px 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-add-small:hover { color: #1a1a1a; border-color: #aaa; }
+
+  .btn-add-full {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #888;
+    background: #fff;
+    border: 1px dashed #d0d0d0;
+    border-radius: 8px;
+    padding: 9px;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.15s;
+  }
+  .btn-add-full:hover { color: #1a1a1a; border-color: #aaa; background: #fafafa; }
+
+  .btn-icon-del {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: 1px solid #e0e0e0;
+    border-radius: 7px;
+    color: #bbb;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .btn-icon-del:hover { background: #fef2f2; border-color: #f09595; color: #e24b4a; }
+
+  /* Form Sections */
+  .section-card {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #aaa;
+    margin-bottom: 1rem;
+  }
+
+  .field-row { display: grid; gap: 12px; margin-bottom: 12px; }
+  .field-row.two { grid-template-columns: 1fr 1fr; }
+  .field-row.three { grid-template-columns: 1fr 1fr 1fr; }
+  .field-row:last-child { margin-bottom: 0; }
+
+  .field-group { display: flex; flex-direction: column; gap: 5px; }
+
+  label.field-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #666;
+  }
+
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="number"],
+  select,
+  textarea {
+    width: 100%;
+    font-family: inherit;
+    font-size: 14px;
+    color: #1a1a1a;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 9px 12px;
+    outline: none;
+    transition: border-color 0.15s;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: #999;
+    box-shadow: 0 0 0 3px rgba(0,0,0,0.04);
+  }
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23aaa' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+    cursor: pointer;
+  }
+  textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
+
+  /* Order rows */
+  .order-col-heads {
+    display: grid;
+    grid-template-columns: 2fr 2fr 80px 36px;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+  .col-head { font-size: 11px; font-weight: 600; color: #bbb; text-transform: uppercase; letter-spacing: 0.06em; }
+
+  .order-row {
+    display: grid;
+    grid-template-columns: 2fr 2fr 80px 36px;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .order-row input[type="number"] { text-align: center; }
+
+  .btn-add-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #888;
+    background: none;
+    border: 1px dashed #d0d0d0;
+    border-radius: 8px;
+    padding: 7px 14px;
+    cursor: pointer;
+    margin-top: 4px;
+    transition: all 0.15s;
+  }
+  .btn-add-row:hover { color: #1a1a1a; border-color: #aaa; }
+
+  /* Distributors Checklist */
+  .dist-check-list { display: flex; flex-direction: column; gap: 8px; }
+  .dist-check-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: #fafafa;
+    border: 1px solid #e8e8e8;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .dist-check-item:hover { background: #f0f0ee; border-color: #d0d0d0; }
+  .dist-check-item input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    border: 1.5px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    flex-shrink: 0;
+    accent-color: #1a1a1a;
+  }
+  .dist-check-info { flex: 1; }
+  .dist-check-name { font-size: 14px; font-weight: 500; color: #1a1a1a; }
+  .dist-check-email { font-size: 12px; color: #aaa; }
+
+  .no-dist-msg { font-size: 13px; color: #aaa; font-style: italic; padding: 8px 0; }
+
+  /* Submit */
+  .submit-section {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 1.5rem;
+  }
+
+  .submit-btn {
+    width: 100%;
+    margin-top: 1rem;
+    padding: 13px;
+    background: #1a1a1a;
+    color: #fff;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    border: none;
+    border-radius: 9px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .submit-btn:hover { opacity: 0.85; }
+  .submit-btn:active { transform: scale(0.99); }
+
+  .success-banner {
+    display: none;
+    margin-top: 12px;
+    background: #eaf3de;
+    border: 1px solid #c0dd97;
+    color: #3b6d11;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .error-banner {
+    display: none;
+    margin-top: 12px;
+    background: #fcebeb;
+    border: 1px solid #f09595;
+    color: #a32d2d;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 13px;
+  }
+
+  /* Web3Forms key notice */
+  .setup-notice {
+    background: #faeeda;
+    border: 1px solid #fac775;
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 13px;
+    color: #633806;
+    margin-bottom: 1.25rem;
+    line-height: 1.6;
+  }
+  .setup-notice strong { font-weight: 600; }
+  .setup-notice a { color: #633806; }
+
+  /* Responsive */
+  @media (max-width: 540px) {
+    .field-row.two, .field-row.three { grid-template-columns: 1fr; }
+    .order-col-heads, .order-row { grid-template-columns: 1.5fr 1.5fr 60px 32px; }
+    .catalog-grid { grid-template-columns: 1fr; }
+    .distributor-item { grid-template-columns: 1fr 36px; grid-template-rows: auto auto; }
+    .distributor-item input:first-child { grid-column: 1; }
+    .distributor-item input:nth-child(2) { grid-column: 1; }
+    .distributor-item button { grid-column: 2; grid-row: 1; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-wrap">
+
+  <div class="page-header">
+    <h1>Sales Order Form</h1>
+    <p>Fill in the store details, select products, and send to your distributor(s).</p>
+  </div>
+
+  <!-- Setup notice – remove once Web3Forms key is added -->
+  <div class="setup-notice" id="setupNotice">
+    <strong>&#9888; One-time setup required:</strong> To activate order sending, go to
+    <a href="https://web3forms.com" target="_blank">web3forms.com</a>, sign up free with your email,
+    copy your Access Key, and paste it into the <strong>Admin Panel → Settings</strong> tab below.
+    Then remove this notice by deleting this yellow box from the HTML file.
+  </div>
+
+  <!-- Admin Toggle -->
+  <button class="admin-toggle" onclick="toggleAdmin()" id="adminToggle">&#9998; Admin panel — edit products &amp; distributors</button>
+
+  <!-- Admin Panel -->
+  <div class="admin-panel" id="adminPanel">
+    <div class="admin-tabs">
+      <button class="admin-tab active" onclick="switchTab('distributors', this)">Distributors</button>
+      <button class="admin-tab" onclick="switchTab('products', this)">Products &amp; variants</button>
+      <button class="admin-tab" onclick="switchTab('settings', this)">Settings</button>
+    </div>
+
+    <!-- Distributors Tab -->
+    <div class="admin-tab-content active" id="tab-distributors">
+      <div style="font-size:13px;color:#888;margin-bottom:12px;">Add each distributor's name and email. The salesperson will choose which ones to send each order to.</div>
+      <div style="display:grid;grid-template-columns:1fr 1.5fr 36px;gap:8px;margin-bottom:6px;padding:0 12px;">
+        <span style="font-size:11px;color:#bbb;text-transform:uppercase;letter-spacing:.06em;font-weight:600;">Name</span>
+        <span style="font-size:11px;color:#bbb;text-transform:uppercase;letter-spacing:.06em;font-weight:600;">Email</span>
+        <span></span>
+      </div>
+      <div class="distributor-list" id="distributorList"></div>
+      <button class="btn-add-full" onclick="addDistributor()">+ add distributor</button>
+    </div>
+
+    <!-- Products Tab -->
+    <div class="admin-tab-content" id="tab-products">
+      <div style="font-size:13px;color:#888;margin-bottom:12px;">Add your products and their variants. These populate the dropdowns on the order form.</div>
+      <div class="catalog-grid" id="catalogGrid"></div>
+      <button class="btn-add-full" onclick="addProduct()">+ add product</button>
+    </div>
+
+    <!-- Settings Tab -->
+    <div class="admin-tab-content" id="tab-settings">
+      <div style="font-size:13px;color:#888;margin-bottom:12px;">
+        Get your free Access Key at <a href="https://web3forms.com" target="_blank" style="color:#1a1a1a;">web3forms.com</a> — sign up with your email and paste the key below. Orders will be emailed to each distributor you've selected.
+      </div>
+      <div class="field-group" style="max-width:460px;">
+        <label class="field-label">Web3Forms Access Key</label>
+        <input type="text" id="w3fKey" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" oninput="saveSettings()" />
+      </div>
+      <div style="margin-top:16px;" class="field-group" style="max-width:460px;">
+        <label class="field-label">Company / brand name (shown in order emails)</label>
+        <input type="text" id="companyName" placeholder="Your Company Name" oninput="saveSettings()" />
+      </div>
+    </div>
+  </div>
+
+  <!-- Store Information -->
+  <div class="section-card">
+    <div class="section-label">Store information</div>
+    <div class="field-row">
+      <div class="field-group">
+        <label class="field-label">Store name *</label>
+        <input type="text" id="storeName" placeholder="e.g. Maple Street Market" />
+      </div>
+    </div>
+    <div class="field-row two">
+      <div class="field-group">
+        <label class="field-label">Contact email</label>
+        <input type="email" id="storeEmail" placeholder="owner@storename.com" />
+      </div>
+      <div class="field-group">
+        <label class="field-label">Phone number</label>
+        <input type="tel" id="storePhone" placeholder="+1 (000) 000-0000" />
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-group">
+        <label class="field-label">Street address</label>
+        <input type="text" id="storeStreet" placeholder="123 Main Street" />
+      </div>
+    </div>
+    <div class="field-row three">
+      <div class="field-group">
+        <label class="field-label">City</label>
+        <input type="text" id="storeCity" placeholder="City" />
+      </div>
+      <div class="field-group">
+        <label class="field-label">Province / State</label>
+        <input type="text" id="storeProvince" placeholder="ON" />
+      </div>
+      <div class="field-group">
+        <label class="field-label">Postal / ZIP</label>
+        <input type="text" id="storePostal" placeholder="A1B 2C3" />
+      </div>
+    </div>
+  </div>
+
+  <!-- Order Items -->
+  <div class="section-card">
+    <div class="section-label">Order items</div>
+    <div class="order-col-heads">
+      <span class="col-head">Product</span>
+      <span class="col-head">Variant</span>
+      <span class="col-head">Qty</span>
+      <span></span>
+    </div>
+    <div id="orderRows"></div>
+    <button class="btn-add-row" onclick="addOrderRow()">+ add item</button>
+  </div>
+
+  <!-- Special Requests -->
+  <div class="section-card">
+    <div class="section-label">Special requests</div>
+    <textarea id="specialRequests" placeholder="Any special instructions, substitutions, delivery notes, or other requests for this order…"></textarea>
+  </div>
+
+  <!-- Send To -->
+  <div class="submit-section">
+    <div class="section-label">Send order to</div>
+    <div class="dist-check-list" id="distChecklist">
+      <p class="no-dist-msg">No distributors added yet — open the Admin Panel above to add them.</p>
+    </div>
+    <button class="submit-btn" onclick="submitOrder()">Send order &rarr;</button>
+    <div class="success-banner" id="successBanner"></div>
+    <div class="error-banner" id="errorBanner"></div>
+  </div>
+
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+let catalog = [
+  { id: 1, name: "Product A", variants: ["Small", "Medium", "Large"] },
+  { id: 2, name: "Product B", variants: ["Red", "Blue", "Green"] },
+  { id: 3, name: "Product C", variants: ["Standard", "Premium"] },
+];
+let distributors = [];
+let orderRows = [];
+let nextProdId = 4;
+let nextRowId = 1;
+
+// ── Persistence ────────────────────────────────────────────────────────────
+function save() {
+  try {
+    localStorage.setItem('sof_catalog', JSON.stringify(catalog));
+    localStorage.setItem('sof_distributors', JSON.stringify(distributors));
+  } catch(e) {}
+}
+
+function load() {
+  try {
+    const c = localStorage.getItem('sof_catalog');
+    const d = localStorage.getItem('sof_distributors');
+    const k = localStorage.getItem('sof_settings');
+    if (c) catalog = JSON.parse(c);
+    if (d) distributors = JSON.parse(d);
+    if (k) {
+      const s = JSON.parse(k);
+      if (s.key) document.getElementById('w3fKey').value = s.key;
+      if (s.company) document.getElementById('companyName').value = s.company;
+    }
+    nextProdId = catalog.length ? Math.max(...catalog.map(p => p.id)) + 1 : 1;
+  } catch(e) {}
+}
+
+function saveSettings() {
+  try {
+    localStorage.setItem('sof_settings', JSON.stringify({
+      key: document.getElementById('w3fKey').value,
+      company: document.getElementById('companyName').value
+    }));
+  } catch(e) {}
+}
+
+// ── Admin Panel ────────────────────────────────────────────────────────────
+function toggleAdmin() {
+  const panel = document.getElementById('adminPanel');
+  const btn = document.getElementById('adminToggle');
+  const open = panel.classList.toggle('open');
+  btn.textContent = open
+    ? '✕ Close admin panel'
+    : '✎ Admin panel — edit products & distributors';
+  if (open) { renderCatalog(); renderDistributorAdmin(); }
+}
+
+function switchTab(name, el) {
+  document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.admin-tab-content').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+// ── Distributors (admin) ───────────────────────────────────────────────────
+function renderDistributorAdmin() {
+  const list = document.getElementById('distributorList');
+  list.innerHTML = '';
+  distributors.forEach(d => {
+    const row = document.createElement('div');
+    row.className = 'distributor-item';
+    row.innerHTML = `
+      <input type="text" value="${esc(d.name)}" placeholder="Distributor name" oninput="updateDist(${d.id}, 'name', this.value)" />
+      <input type="email" value="${esc(d.email)}" placeholder="email@distributor.com" oninput="updateDist(${d.id}, 'email', this.value)" />
+      <button class="btn-icon-del" onclick="deleteDist(${d.id})">&#215;</button>
+    `;
+    list.appendChild(row);
+  });
+  renderDistChecklist();
+}
+
+function addDistributor() {
+  const id = Date.now();
+  distributors.push({ id, name: '', email: '' });
+  save();
+  renderDistributorAdmin();
+  // Focus first empty name input
+  const inputs = document.querySelectorAll('#distributorList input[type="text"]');
+  if (inputs.length) inputs[inputs.length - 1].focus();
+}
+
+function updateDist(id, field, val) {
+  const d = distributors.find(x => x.id === id);
+  if (d) d[field] = val;
+  save();
+  renderDistChecklist();
+}
+
+function deleteDist(id) {
+  distributors = distributors.filter(x => x.id !== id);
+  save();
+  renderDistributorAdmin();
+}
+
+// ── Distributor Checklist (form) ───────────────────────────────────────────
+function renderDistChecklist() {
+  const list = document.getElementById('distChecklist');
+  const valid = distributors.filter(d => d.name || d.email);
+  if (!valid.length) {
+    list.innerHTML = '<p class="no-dist-msg">No distributors added yet — open the Admin Panel above to add them.</p>';
+    return;
+  }
+  list.innerHTML = valid.map(d => `
+    <label class="dist-check-item">
+      <input type="checkbox" name="dist" value="${esc(d.email)}" />
+      <div class="dist-check-info">
+        <div class="dist-check-name">${esc(d.name) || 'Unnamed distributor'}</div>
+        <div class="dist-check-email">${esc(d.email) || 'No email set'}</div>
+      </div>
+    </label>
+  `).join('');
+}
+
+// ── Catalog (admin) ────────────────────────────────────────────────────────
+function renderCatalog() {
+  const grid = document.getElementById('catalogGrid');
+  grid.innerHTML = '';
+  catalog.forEach(prod => {
+    const card = document.createElement('div');
+    card.className = 'product-card';
+    card.innerHTML = `
+      <div class="product-name-row">
+        <input type="text" value="${esc(prod.name)}" placeholder="Product name" oninput="updateProdName(${prod.id}, this.value)" />
+        <button class="btn-icon-del" onclick="deleteProduct(${prod.id})" title="Remove product">&#215;</button>
+      </div>
+      <div class="variant-label">Variants</div>
+      <div class="variant-tags" id="vt-${prod.id}">
+        ${prod.variants.map((v, i) => variantTag(prod.id, v, i)).join('')}
+        <button class="btn-add-small" onclick="addVariant(${prod.id})">+ add</button>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+  refreshOrderSelects();
+}
+
+function variantTag(pid, v, i) {
+  return `<span class="variant-tag">
+    <input type="text" value="${esc(v)}" oninput="updateVariant(${pid}, ${i}, this.value)" />
+    <button class="tag-x" onclick="removeVariant(${pid}, ${i})">&#215;</button>
+  </span>`;
+}
+
+function updateProdName(id, val) {
+  catalog.find(p => p.id === id).name = val;
+  save();
+  refreshOrderSelects();
+}
+
+function updateVariant(id, idx, val) {
+  catalog.find(p => p.id === id).variants[idx] = val;
+  save();
+}
+
+function removeVariant(id, idx) {
+  catalog.find(p => p.id === id).variants.splice(idx, 1);
+  save();
+  renderCatalog();
+}
+
+function addVariant(id) {
+  catalog.find(p => p.id === id).variants.push('New variant');
+  save();
+  renderCatalog();
+}
+
+function addProduct() {
+  catalog.push({ id: nextProdId++, name: 'New product', variants: ['Option 1'] });
+  save();
+  renderCatalog();
+}
+
+function deleteProduct(id) {
+  catalog = catalog.filter(p => p.id !== id);
+  save();
+  renderCatalog();
+}
+
+// ── Order Rows ─────────────────────────────────────────────────────────────
+function addOrderRow() {
+  const id = nextRowId++;
+  orderRows.push({ id, product: '', variant: '', qty: 1 });
+  renderOrderRows();
+}
+
+function removeOrderRow(id) {
+  orderRows = orderRows.filter(r => r.id !== id);
+  renderOrderRows();
+}
+
+function onProductChange(id, val) {
+  const row = orderRows.find(r => r.id === id);
+  row.product = val;
+  row.variant = '';
+  renderOrderRows();
+}
+
+function onVariantChange(id, val) {
+  orderRows.find(r => r.id === id).variant = val;
+}
+
+function onQtyChange(id, val) {
+  orderRows.find(r => r.id === id).qty = parseInt(val) || 1;
+}
+
+function buildProductOptions(selected) {
+  return `<option value="">— select product —</option>` +
+    catalog.map(p => `<option value="${esc(p.name)}" ${p.name === selected ? 'selected' : ''}>${esc(p.name)}</option>`).join('');
+}
+
+function buildVariantOptions(prodName, selected) {
+  const prod = catalog.find(p => p.name === prodName);
+  if (!prod || !prod.variants.length) return '<option value="N/A">N/A</option>';
+  return `<option value="">— select variant —</option>` +
+    prod.variants.map(v => `<option value="${esc(v)}" ${v === selected ? 'selected' : ''}>${esc(v)}</option>`).join('');
+}
+
+function renderOrderRows() {
+  const container = document.getElementById('orderRows');
+  container.innerHTML = '';
+  orderRows.forEach(row => {
+    const div = document.createElement('div');
+    div.className = 'order-row';
+    div.innerHTML = `
+      <select onchange="onProductChange(${row.id}, this.value)">${buildProductOptions(row.product)}</select>
+      <select onchange="onVariantChange(${row.id}, this.value)">${buildVariantOptions(row.product, row.variant)}</select>
+      <input type="number" min="1" value="${row.qty}" onchange="onQtyChange(${row.id}, this.value)" />
+      <button class="btn-icon-del" onclick="removeOrderRow(${row.id})">&#215;</button>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function refreshOrderSelects() {
+  orderRows.forEach(row => {
+    if (row.product && !catalog.find(p => p.name === row.product)) {
+      row.product = '';
+      row.variant = '';
+    }
+  });
+  renderOrderRows();
+}
+
+// ── Submit ─────────────────────────────────────────────────────────────────
+async function submitOrder() {
+  const successEl = document.getElementById('successBanner');
+  const errorEl = document.getElementById('errorBanner');
+  successEl.style.display = 'none';
+  errorEl.style.display = 'none';
+
+  const storeName = document.getElementById('storeName').value.trim();
+  if (!storeName) {
+    alert('Please enter the store name.');
+    document.getElementById('storeName').focus();
+    return;
+  }
+
+  const selectedDists = [...document.querySelectorAll('input[name="dist"]:checked')];
+  if (!selectedDists.length) {
+    alert('Please select at least one distributor to send this order to.');
+    return;
+  }
+
+  const items = orderRows.filter(r => r.product);
+  if (!items.length) {
+    alert('Please add at least one product to the order.');
+    return;
+  }
+
+  const w3fKey = document.getElementById('w3fKey').value.trim();
+  const company = document.getElementById('companyName').value.trim() || 'Sales Team';
+
+  // Build order summary text
+  const itemsText = items.map(r =>
+    `${r.product}${r.variant && r.variant !== 'N/A' ? ' – ' + r.variant : ''} × ${r.qty}`
+  ).join('\n');
+
+  const address = [
+    document.getElementById('storeStreet').value,
+    document.getElementById('storeCity').value,
+    document.getElementById('storeProvince').value,
+    document.getElementById('storePostal').value
+  ].filter(Boolean).join(', ');
+
+  const special = document.getElementById('specialRequests').value.trim();
+
+  const orderBody = `New order from ${company}
+
+STORE DETAILS
+Store: ${storeName}
+Email: ${document.getElementById('storeEmail').value || 'N/A'}
+Phone: ${document.getElementById('storePhone').value || 'N/A'}
+Address: ${address || 'N/A'}
+
+ORDER ITEMS
+${itemsText}
+${special ? '\nSPECIAL REQUESTS\n' + special : ''}`;
+
+  const distEmails = selectedDists.map(cb => cb.value).filter(Boolean);
+
+  if (!w3fKey) {
+    // Fallback: open mailto
+    const mailto = `mailto:${distEmails.join(',')}?subject=${encodeURIComponent('New store order — ' + storeName)}&body=${encodeURIComponent(orderBody)}`;
+    window.location.href = mailto;
+    successEl.innerHTML = 'Your email app has been opened with the order. Please press Send to deliver it to your distributor(s).';
+    successEl.style.display = 'block';
+    return;
+  }
+
+  // Send via Web3Forms (one request per distributor)
+  const btn = document.querySelector('.submit-btn');
+  btn.textContent = 'Sending…';
+  btn.disabled = true;
+
+  let allOk = true;
+  for (const email of distEmails) {
+    try {
+      const res = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({
+          access_key: w3fKey,
+          to: email,
+          subject: `New store order — ${storeName}`,
+          message: orderBody,
+          from_name: company,
+          replyto: document.getElementById('storeEmail').value || undefined,
+        })
+      });
+      const data = await res.json();
+      if (!data.success) allOk = false;
+    } catch(e) {
+      allOk = false;
+    }
+  }
+
+  btn.textContent = 'Send order →';
+  btn.disabled = false;
+
+  if (allOk) {
+    const distNames = selectedDists.map(cb => {
+      const label = cb.closest('label');
+      return label ? label.querySelector('.dist-check-name').textContent : cb.value;
+    }).join(', ');
+    successEl.innerHTML = `&#10003; Order sent successfully to: <strong>${distNames}</strong>`;
+    successEl.style.display = 'block';
+    // Reset order rows
+    orderRows = [];
+    nextRowId = 1;
+    addOrderRow();
+    addOrderRow();
+    document.getElementById('specialRequests').value = '';
+    document.querySelectorAll('input[name="dist"]').forEach(cb => cb.checked = false);
+  } else {
+    errorEl.textContent = 'Something went wrong sending the order. Please check your Web3Forms key and try again, or use the mailto fallback.';
+    errorEl.style.display = 'block';
+  }
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function esc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+load();
+addOrderRow();
+addOrderRow();
+renderDistChecklist();
+</script>
+</body>
+</html>
